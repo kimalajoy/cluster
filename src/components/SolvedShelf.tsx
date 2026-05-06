@@ -9,6 +9,9 @@ interface SolvedShelfProps {
   onGroupDragStart: (groupId: string, e: React.PointerEvent) => void;
   categoryColorMap: Map<string, string>;
   debugMode: boolean;
+  compactMode: boolean;
+  onToggleCompact: () => void;
+  totalCategories: number;
 }
 
 export default function SolvedShelf({
@@ -18,11 +21,24 @@ export default function SolvedShelf({
   onGroupDragStart,
   categoryColorMap,
   debugMode,
+  compactMode,
+  onToggleCompact,
+  totalCategories,
 }: SolvedShelfProps) {
   if (groupTokens.length === 0) return null;
 
+  const uniqueCategories = new Set(groupTokens.map((t) => t.categoryId)).size;
+
   return (
     <div className="solved-shelf">
+      <div className="solved-shelf__header">
+        <span className="solved-shelf__count">{uniqueCategories}/{totalCategories} {uniqueCategories === 1 ? "category" : "categories"} · {groupTokens.length} {groupTokens.length === 1 ? "group" : "groups"}</span>
+        {!compactMode && (
+          <button className="controls__btn solved-shelf__compact-btn" onClick={onToggleCompact}>
+            Collapse gaps
+          </button>
+        )}
+      </div>
       <div className="solved-shelf__groups">
         {groupTokens.map((t) => (
           <GroupToken

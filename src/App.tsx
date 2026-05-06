@@ -32,12 +32,18 @@ const emptyUI: UIState = {
   selectedGroupIds: [],
   lastResult: null,
   streakMilestone: null,
+  compactMode: false,
 };
+
+function resetUI(prev: UIState, overrides: Partial<UIState> = {}): UIState {
+  return { ...emptyUI, compactMode: prev.compactMode, ...overrides };
+}
 
 export default function App() {
   const [gameState, updateState, resetState] = useGameState(typedGameData);
   const [ui, setUI] = useState<UIState>(emptyUI);
   const [debugMode, setDebugMode] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     const stored = localStorage.getItem("cluster-theme");
     if (stored === "light" || stored === "dark") return stored;
@@ -85,19 +91,19 @@ export default function App() {
       const result = validatePair(source.globalIndex, target.globalIndex, flatItems, gameState.groups);
       const { milestone } = result.valid ? streakBonus(gameState.streak, gameState.streak + 1) : { milestone: null };
       updateState((s) => applyPair(s, result, typedGameData));
-      setUI({ ...emptyUI, lastResult: result.valid ? "correct" : "wrong", streakMilestone: milestone });
+      setUI((u) => resetUI(u, { lastResult: result.valid ? "correct" : "wrong", streakMilestone: milestone }));
     } else if (source.kind === "tile" && target.kind === "group") {
       const result = validatePlaceTile(source.globalIndex, target.groupId, flatItems, gameState.groups);
       const { milestone } = result.valid ? streakBonus(gameState.streak, gameState.streak + 1) : { milestone: null };
       updateState((s) => applyPlaceTile(s, result, source.globalIndex, typedGameData));
-      setUI({ ...emptyUI, lastResult: result.valid ? "correct" : "wrong", streakMilestone: milestone });
+      setUI((u) => resetUI(u, { lastResult: result.valid ? "correct" : "wrong", streakMilestone: milestone }));
     } else if (source.kind === "group" && target.kind === "group") {
       if (source.groupId === target.groupId) return;
       const mergeIds = [source.groupId, target.groupId];
       const result = validateMerge(mergeIds, gameState.groups);
       const { milestone } = result.valid ? streakBonus(gameState.streak, gameState.streak + 1) : { milestone: null };
       updateState((s) => applyMerge(s, result, mergeIds, typedGameData));
-      setUI({ ...emptyUI, lastResult: result.valid ? "correct" : "wrong", streakMilestone: milestone });
+      setUI((u) => resetUI(u, { lastResult: result.valid ? "correct" : "wrong", streakMilestone: milestone }));
     }
     // group â†’ tile: no-op
   }, [flatItems, gameState.groups, gameState.streak, updateState]);
@@ -133,11 +139,11 @@ export default function App() {
         const result = validatePair(idx1, idx2, flatItems, gameState.groups);
         const { milestone } = result.valid ? streakBonus(gameState.streak, gameState.streak + 1) : { milestone: null };
         updateState((s) => applyPair(s, result, typedGameData));
-        setUI({ ...emptyUI, lastResult: result.valid ? "correct" : "wrong", streakMilestone: milestone });
+        setUI((u) => resetUI(u, { lastResult: result.valid ? "correct" : "wrong", streakMilestone: milestone }));
         return;
       }
 
-      setUI({ ...emptyUI, selectedTileIndices: [globalIndex], selectedTileIndex: globalIndex });
+      setUI((u) => resetUI(u, { selectedTileIndices: [globalIndex], selectedTileIndex: globalIndex }));
     },
     [didDrag, flatItems, gameState.groups, ui.selectedTileIndices, updateState]
   );
@@ -151,7 +157,7 @@ export default function App() {
         const result = validatePlaceTile(ui.selectedTileIndex, groupId, flatItems, gameState.groups);
         const { milestone } = result.valid ? streakBonus(gameState.streak, gameState.streak + 1) : { milestone: null };
         updateState((s) => applyPlaceTile(s, result, ui.selectedTileIndex!, typedGameData));
-        setUI({ ...emptyUI, lastResult: result.valid ? "correct" : "wrong", streakMilestone: milestone });
+        setUI((u) => resetUI(u, { lastResult: result.valid ? "correct" : "wrong", streakMilestone: milestone }));
         return;
       }
 
@@ -166,7 +172,7 @@ export default function App() {
         const result = validateMerge(next, gameState.groups);
         const { milestone } = result.valid ? streakBonus(gameState.streak, gameState.streak + 1) : { milestone: null };
         updateState((s) => applyMerge(s, result, next, typedGameData));
-        setUI({ ...emptyUI, lastResult: result.valid ? "correct" : "wrong", streakMilestone: milestone });
+        setUI((u) => resetUI(u, { lastResult: result.valid ? "correct" : "wrong", streakMilestone: milestone }));
         return;
       }
       setUI((u) => ({ ...u, selectedGroupIds: next, lastResult: null }));
@@ -174,20 +180,29 @@ export default function App() {
     [didDrag, ui.selectedTileIndex, ui.selectedGroupIds, flatItems, gameState.groups, gameState.streak, updateState]
   );
 
+  const handleToggleCompact = useCallback(() => {
+    setUI((u) => ({ ...u, compactMode: true }));
+  }, []);
+
   const handleDeselect = useCallback(() => {
-    setUI(emptyUI);
+    setUI((u) => resetUI(u));
     onDragCancel();
   }, [onDragCancel]);
 
   const handleReset = useCallback(() => {
+    if (!confirmReset) {
+      setConfirmReset(true);
+      return;
+    }
+    setConfirmReset(false);
     resetState();
     setUI(emptyUI);
     onDragCancel();
-  }, [resetState, onDragCancel]);
+  }, [confirmReset, resetState, onDragCancel]);
 
   const tileViewModels = useMemo(
-    () => buildTileViewModels(flatItems, gameState.groups, ui.selectedTileIndices),
-    [flatItems, gameState.groups, ui.selectedTileIndices]
+    () => buildTileViewModels(flatItems, gameState.groups, ui.selectedTileIndices, ui.compactMode),
+    [flatItems, gameState.groups, ui.selectedTileIndices, ui.compactMode]
   );
 
   const groupTokens = useMemo(
@@ -232,10 +247,11 @@ export default function App() {
             Deselect
           </button>
           <button
-            className="controls__btn controls__btn--reset"
+            className={`controls__btn controls__btn--reset${confirmReset ? " controls__btn--confirm" : ""}`}
             onClick={handleReset}
+            onBlur={() => setConfirmReset(false)}
           >
-            Reset
+            {confirmReset ? "Sure?" : "Reset"}
           </button>
         </div>
       </header>
@@ -266,6 +282,9 @@ export default function App() {
         onGroupDragStart={handleGroupDragStart}
         categoryColorMap={categoryColorMap}
         debugMode={debugMode}
+        compactMode={ui.compactMode}
+        onToggleCompact={handleToggleCompact}
+        totalCategories={typedGameData.categories.length}
       />
 
       <VirtualGrid
@@ -280,7 +299,7 @@ export default function App() {
 
       <footer className="game__footer">
         <button
-          className="back-to-top"
+          className="game__scroll-top"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         >
           ^ Top

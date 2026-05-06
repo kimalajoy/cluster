@@ -78,6 +78,9 @@ export function useDrag(
         movedRef.current = true;
       }
 
+      // Only prevent scroll after drag threshold is confirmed
+      e.preventDefault();
+
       const overTarget = targetAtPoint(e.clientX, e.clientY);
       if (!targetsEqual(overTarget, stateRef.current.overTarget)) {
         setDragStateSynced({ ...stateRef.current, overTarget });
@@ -114,13 +117,13 @@ export function useDrag(
       startPosRef.current = { x: startX, y: startY };
       stateRef.current = { source, overTarget: null };
       setDragState({ source, overTarget: null });
-      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointermove", onMove, { passive: false });
       window.addEventListener("pointerup", onUp);
       window.addEventListener("pointercancel", onCancel);
     };
 
     return () => {
-      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointermove", onMove, false);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onCancel);
       delete (window as any).__dragActivate;
@@ -128,7 +131,6 @@ export function useDrag(
   }, [setDragStateSynced]);
 
   const onDragStart = useCallback((source: DragSource, e: React.PointerEvent) => {
-    e.preventDefault();
     (window as any).__dragActivate?.(source, e.clientX, e.clientY);
   }, []);
 

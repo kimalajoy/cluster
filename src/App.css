@@ -103,6 +103,19 @@
   flex-direction: column;
   gap: 8px;
 }
+.solved-shelf__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.solved-shelf__count {
+  font-size: 13px;
+  color: var(--text);
+}
+.solved-shelf__compact-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+}
 .solved-shelf__groups {
   display: flex;
   flex-wrap: wrap;
@@ -295,6 +308,11 @@
 .controls__btn--reset:hover {
   opacity: 1;
 }
+.controls__btn--confirm {
+  opacity: 1;
+  border-color: #dc2626;
+  color: #dc2626;
+}
 .game__footer {
   position: sticky;
   bottom: 0;
@@ -306,7 +324,7 @@
   z-index: 10;
 }
 
-.back-to-top {
+.game__scroll-top {
   padding: 6px 16px;
   border-radius: 6px;
   border: 1px solid var(--border);
@@ -317,7 +335,7 @@
   cursor: pointer;
 }
 @media (hover: hover) {
-  .back-to-top:hover {
+  .game__scroll-top:hover {
     border-color: var(--accent-border);
     background: var(--accent-bg);
   }

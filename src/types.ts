@@ -42,6 +42,7 @@ export interface UIState {
   selectedGroupIds: string[];
   lastResult: "correct" | "wrong" | null;
   streakMilestone: 3 | 5 | null;
+  compactMode: boolean;
 }
 
 export type TileStatus = "unselected" | "selected" | "collected";

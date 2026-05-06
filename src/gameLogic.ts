@@ -195,15 +195,20 @@ export function applyMerge(state: GameState, result: MergeGroupsResult, mergedGr
 export function buildTileViewModels(
   flatItems: FlatItem[],
   groups: ShelfGroup[],
-  selectedTileIndices: number[]
+  selectedTileIndices: number[],
+  compactMode = false
 ): TileViewModel[] {
   const collected = collectedIndices(groups);
-  return flatItems.map((item) => {
-    let status: TileStatus = "unselected";
-    if (collected.has(item.globalIndex)) status = "collected";
-    else if (selectedTileIndices.includes(item.globalIndex)) status = "selected";
-    return { globalIndex: item.globalIndex, label: item.itemLabel, categoryId: item.categoryId, status };
-  });
+  const result: TileViewModel[] = [];
+  for (const item of flatItems) {
+    if (collected.has(item.globalIndex)) {
+      if (!compactMode) result.push({ globalIndex: item.globalIndex, label: item.itemLabel, categoryId: item.categoryId, status: "collected" });
+    } else {
+      const status: TileStatus = selectedTileIndices.includes(item.globalIndex) ? "selected" : "unselected";
+      result.push({ globalIndex: item.globalIndex, label: item.itemLabel, categoryId: item.categoryId, status });
+    }
+  }
+  return result;
 }
 
 export function buildGroupTokenViewModels(

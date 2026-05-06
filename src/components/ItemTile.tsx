@@ -47,7 +47,6 @@ export default function ItemTile({
       title={label}
       onPointerDown={onDragStart}
       style={{
-        touchAction: onDragStart ? "none" : undefined,
         backgroundColor: debugColor ?? undefined,
       }}
     >
