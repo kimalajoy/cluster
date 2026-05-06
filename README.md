@@ -1,73 +1,48 @@
-# React + TypeScript + Vite
+# Cluster
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Connections-style puzzle game. Find matching tiles, pair them up, and build groups to complete every category. I had so much fun with Thomas Colthurst [45 by 45 Connections puzzle he wrote to commemorate 2025](https://thomaswc.com/2025.html) that I wanted to keep playing! So, I made my own version with new categories!
 
-Currently, two official plugins are available:
+## How to play
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Click two tiles** of the same category to pair them — they move to the shelf as a group
+- **Click a tile then a shelf group** to add it to that group
+- **Click two shelf groups** of the same category to merge them
+- **Drag and drop** works for all of the above
+- A category is complete when all its items are in a single group
+- Correct moves build your streak; wrong guesses cost points
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev       # http://localhost:5173
+npm run build     # production build → dist/
+npm run preview   # preview the production build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Adding a puzzle
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Edit `src/data/game.json`. The structure is:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```json
+{
+  "id": "unique-puzzle-id",
+  "title": "Puzzle Title",
+  "categories": [
+    {
+      "id": "category-id",
+      "name": "Display Name",
+      "items": ["Item 1", "Item 2", "..."]
+    }
+  ]
+}
 ```
+
+Any number of categories and items per category are supported. Change the top-level `id` when publishing a new puzzle — this clears players' saved progress automatically.
+
+## Built with
+
+- [React 19](https://react.dev)
+- [Vite](https://vitejs.dev)
+- [TanStack Virtual](https://tanstack.com/virtual) — virtualized tile grid
+- TypeScript
